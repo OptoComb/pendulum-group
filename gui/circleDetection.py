@@ -8,7 +8,7 @@ from time import time
 
 
 class Application(tk.Frame):
-    def __init__(self, master, video_source=0):
+    def __init__(self, master, video_source=1):
         super().__init__(master)
 
         self.master.geometry("700x1000")
@@ -207,7 +207,7 @@ class Application(tk.Frame):
             self.canvas1.create_image(0, 0, image=self.photo, anchor=tk.NW)
             self.master.after(self.delay, self.update)
         else:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            self.vcap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
 
     def press_close_button(self):
