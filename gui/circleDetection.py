@@ -1,8 +1,10 @@
+import cv2
+
+import PIL.Image, PIL.ImageTk
 import tkinter as tk
 from tkinter import ttk
-import cv2
-import PIL.Image, PIL.ImageTk
 from tkinter import font
+
 from csv import writer
 from time import time
 
@@ -123,7 +125,7 @@ class Application(tk.Frame):
         self.btn_close.grid(column=1, row=0, padx=20, pady=10)
 
         #Seve button
-        self.btn_close = tk.Button(self.frame_btn, text='Save', font=self.font_btn_big)
+        self.btn_close = tk.Button(self.frame_btn, text='CSV出力', font=self.font_btn_big)
         self.btn_close.configure(width=12, height=1, command=self.press_save_flag)
         self.btn_close.grid(column=2, row=0, padx=20, pady=10)
 
@@ -138,8 +140,8 @@ class Application(tk.Frame):
         self.frame_param.grid_propagate(0)
         
         #min Dist
-        self.min_Dist_label = tk.Label(self.frame_param, text="min dist", font=self.font_frame)
-        self.min_Dist_label.grid(column=0, row=0, padx=10, pady=10)
+        self.minDist_label = tk.Label(self.frame_param, text="min dist", font=self.font_frame)
+        self.minDist_label.grid(column=0, row=0, padx=10, pady=10)
 
         self.minDist_number = tk.DoubleVar()
         self.minDist_number.set(self.mdist)
@@ -170,7 +172,6 @@ class Application(tk.Frame):
         self.btn_change.grid(column=6, row=0, padx=10, pady=10)
 
         ##Frame_params_End###
-
 
 
     def update(self):
