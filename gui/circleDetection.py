@@ -71,6 +71,7 @@ class Application(tk.Frame):
         self.vcap = cv2.VideoCapture(video_source)
         self.width = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.height = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        print(self.width, self.height)
         self.width_and_margin = self.width + 30
         self.height_and_margin = self.height + 50
 
@@ -181,6 +182,7 @@ class Application(tk.Frame):
         self.second = time() - self.init_time
 
         if ret:
+            frame = frame[40:440, 120:520]
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             if self.circle_detection_flag:
