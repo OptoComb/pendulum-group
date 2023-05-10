@@ -126,9 +126,9 @@ class Application(tk.Frame):
         self.btn_close.grid(column=1, row=0, padx=20, pady=10)
 
         #Seve button
-        self.btn_close = tk.Button(self.frame_btn, text='CSV出力', font=self.font_btn_big)
-        self.btn_close.configure(width=12, height=1, command=self.press_save_flag)
-        self.btn_close.grid(column=2, row=0, padx=20, pady=10)
+        self.btn_save = tk.Button(self.frame_btn, text='CSV出力', font=self.font_btn_big)
+        self.btn_save.configure(width=12, height=1, command=self.press_save_flag)
+        self.btn_save.grid(column=2, row=0, padx=20, pady=10)
 
         ###Frame_Buttons_End###
 
@@ -219,9 +219,11 @@ class Application(tk.Frame):
 
     def press_circle_detection(self):
         self.circle_detection_flag = not self.circle_detection_flag
+        self.btn_snapshot.config(text= ('円検出中' if self.circle_detection_flag else '円検出'))
 
     def press_save_flag(self):
         self.save_flag = not self.save_flag
+        self.btn_save.config(text= ('CSV出力中' if self.save_flag else 'CSV出力'))
 
     def press_change(self):
         ###fitting parameter###
