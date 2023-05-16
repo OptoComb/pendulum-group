@@ -7,6 +7,7 @@ from tkinter import font
 
 from csv import writer
 from time import time
+import numpy as np
 
 
 class Application(tk.Frame):
@@ -40,9 +41,9 @@ class Application(tk.Frame):
             columns_name.extend(lis)
 
         with open(self.csvfile, "w", newline = '') as f:
-                writer_object = writer(f)
-                writer_object.writerow(columns_name)
-                f.close()
+            writer_object = writer(f)
+            writer_object.writerow(columns_name)
+            f.close()
         #############
 
 
@@ -182,6 +183,14 @@ class Application(tk.Frame):
         self.second = time() - self.init_time
 
         if ret:
+            mtx = np.array([[2.23429413e+03, 0.00000000e+00, 6.36470010e+02],
+                            [0.00000000e+00, 2.31772325e+03, 5.74525725e+02],
+                            [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+            _dist = np.array([[-0.77271385, -0.55940247, -0.00505415,  0.08305395,  1.77990709]])
+            wh = (1080, 1920)
+            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, _dist, wh, 1, wh)
+            dst = cv2.undistort(frame, mtx, _dist, None, newcameramtx)
+
             frame = frame[40:440, 120:520]
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
