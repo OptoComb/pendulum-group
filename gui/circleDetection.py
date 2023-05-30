@@ -183,6 +183,7 @@ class Application(tk.Frame):
         self.second = time() - self.init_time
 
         if ret:
+            # キャリブレーション
             mtx = np.array([[2.23429413e+03, 0.00000000e+00, 6.36470010e+02],
                             [0.00000000e+00, 2.31772325e+03, 5.74525725e+02],
                             [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
@@ -191,7 +192,7 @@ class Application(tk.Frame):
             newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, _dist, wh, 1, wh)
             dst = cv2.undistort(frame, mtx, _dist, None, newcameramtx)
 
-            frame = frame[40:440, 120:520]
+            frame = frame[40:420, 100:540]
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             if self.circle_detection_flag:
