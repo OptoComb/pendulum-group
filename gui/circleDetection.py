@@ -8,14 +8,38 @@ from tkinter import font
 from csv import writer
 from time import time
 import numpy as np
+import sys
 
 
 class Application(tk.Frame):
     def __init__(self, master, video_source=1):
         super().__init__(master)
 
-        self.master.geometry("700x1000")
+
+        # ---------------------------------------------------------
+        # Open the video source
+        # ---------------------------------------------------------
+
+        self.vcap = cv2.VideoCapture(video_source)
+        if not self.vcap.isOpened():
+            sys.stderr.write("cannot access video source.")
+            exit()
+
+        self.origin_width = int(self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.origin_height = int(self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        print(f"resolution: {self.origin_width}x{self.origin_height}")
+
+        self.height = 380
+        self.width = 440
+        self.width_and_margin = self.width + 30
+        self.height_and_margin = self.height + 50
+
+
+        # set widget size
+
+        self.master.geometry(f"{max(self.width_and_margin, 600)}x{self.height_and_margin+270}")
         self.master.title("Tkinter with Video Streaming and Capture")
+
 
         # ---------------------------------------------------------
         # initialize setting
@@ -66,18 +90,6 @@ class Application(tk.Frame):
 
 
         # ---------------------------------------------------------
-        # Open the video source
-        # ---------------------------------------------------------
-
-        self.vcap = cv2.VideoCapture(video_source)
-        self.width = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.height = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        print(self.width, self.height)
-        self.width_and_margin = self.width + 30
-        self.height_and_margin = self.height + 50
-
-
-        # ---------------------------------------------------------
         # Widget
         # ---------------------------------------------------------
 
@@ -112,35 +124,35 @@ class Application(tk.Frame):
         ###Frame_Buttons###
 
         self.frame_btn = tk.LabelFrame(self.master, text='Control', font=self.font_frame)
-        self.frame_btn.place(x=10, y=550)
-        self.frame_btn.configure(width=self.width_and_margin, height=100)
+        self.frame_btn.place(x=10, y=10+self.height_and_margin)
+        self.frame_btn.configure(width=max(self.width_and_margin, 570), height=100)
         self.frame_btn.grid_propagate(0)
 
         #circle detection button
         self.btn_snapshot = tk.Button(self.frame_btn, text='円検出', font=self.font_btn_big)
         self.btn_snapshot.configure(width=12, height=1, command=self.press_circle_detection)
-        self.btn_snapshot.grid(column=0, row=0, padx=20, pady=10)
+        self.btn_snapshot.grid(column=0, row=0, padx=10, pady=10)
 
         #Close button
         self.btn_close = tk.Button(self.frame_btn, text='Close', font=self.font_btn_big)
         self.btn_close.configure(width=12, height=1, command=self.press_close_button)
-        self.btn_close.grid(column=1, row=0, padx=20, pady=10)
+        self.btn_close.grid(column=1, row=0, padx=10, pady=10)
 
         #Seve button
         self.btn_save = tk.Button(self.frame_btn, text='CSV出力', font=self.font_btn_big)
         self.btn_save.configure(width=12, height=1, command=self.press_save_flag)
-        self.btn_save.grid(column=2, row=0, padx=20, pady=10)
+        self.btn_save.grid(column=2, row=0, padx=10, pady=10)
 
         ###Frame_Buttons_End###
 
 
         ##Frame_params###
 
-        self.frame_param = tk.LabelFrame(self.master, text='Control', font=self.font_frame)
-        self.frame_param.place(x=10, y=650)
-        self.frame_param.configure(width=self.width_and_margin, height=100)
+        self.frame_param = tk.LabelFrame(self.master, text='Parameters', font=self.font_frame)
+        self.frame_param.place(x=10, y=+10+100+self.height_and_margin)
+        self.frame_param.configure(width=max(self.width_and_margin, 570), height=150)
         self.frame_param.grid_propagate(0)
-        
+
         #min Dist
         self.minDist_label = tk.Label(self.frame_param, text="min dist", font=self.font_frame)
         self.minDist_label.grid(column=0, row=0, padx=10, pady=10)
@@ -171,7 +183,7 @@ class Application(tk.Frame):
         #change
         self.btn_change = tk.Button(self.frame_param, text='Change', font=self.font_btn_big)
         self.btn_change.configure(width=12, height=1, command=self.press_change)
-        self.btn_change.grid(column=6, row=0, padx=10, pady=10)
+        self.btn_change.grid(column=4, row=1, padx=10, pady=10)
 
         ##Frame_params_End###
 
@@ -192,7 +204,7 @@ class Application(tk.Frame):
             newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, _dist, wh, 1, wh)
             dst = cv2.undistort(frame, mtx, _dist, None, newcameramtx)
 
-            frame = frame[40:420, 100:540]
+            frame = frame[40:40+self.width, 100:100+self.height]
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             if self.circle_detection_flag:
