@@ -10,55 +10,57 @@ from time import time
 import numpy as np
 import sys
 
+video_source = "video_analysis/iPhone_data/IMG_5475.mov"
+delay = 1  # milli seconds
+
+
 
 class Application(tk.Frame):
-    def __init__(self, master, video_source=1):
+    def __init__(self, master, video_source="video_analysis/iPhone_data/IMG_5477.mov"):
         super().__init__(master)
-
 
         # ---------------------------------------------------------
         # Open the video source
         # ---------------------------------------------------------
 
         self.vcap = cv2.VideoCapture(video_source)
+
         if not self.vcap.isOpened():
             sys.stderr.write("cannot access video source.")
             exit()
 
-        self.origin_width = int(self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.origin_height = int(self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        print(f"resolution: {self.origin_width}x{self.origin_height}")
+        self.width = int(self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        print(f"resolusion: {self.width}x{self.height}")
+        self.width_and_margin = self.width//2 + 30
+        self.height_and_margin = self.height//2 + 30
 
-        self.height = 380
-        self.width = 440
-        self.width_and_margin = self.width + 30
-        self.height_and_margin = self.height + 50
+        self.frame_rates = self.vcap.get(cv2.CAP_PROP_FPS)
+        print(f"fps: {self.frame_rates}")
 
 
-        # set widget size
-
-        self.master.geometry(f"{max(self.width_and_margin, 600)}x{self.height_and_margin+270}")
+        self.master.geometry(f"{self.width_and_margin+20}x{self.height_and_margin + self.height//2 +222}")
         self.master.title("Tkinter with Video Streaming and Capture")
-
 
         # ---------------------------------------------------------
         # initialize setting
         # ---------------------------------------------------------
-        
-        self.csvfile = "test.csv"
+
+        self.csvfile = f"{video_source.replace('.mov', '')}.csv"
         self.init_time = time()
         self.circle_detection_flag = False
         self.save_flag = False
 
 
         ###fitting parameter###
-        self.mdist = 20
+        self.mdist = 50
         self.par1 = 100
-        self.par2 = 60
+        self.par2 = 31
 
 
         ###csv用意###
-        columns_name = ["time"]
+        self.frame_iterator = 0
+        columns_name = ["frame iterator", "time"]
 
         for i in range(10):
             lis = [f"x{i + 1}", f"y{i + 1}", f"r{i + 1}"]
@@ -124,24 +126,24 @@ class Application(tk.Frame):
         ###Frame_Buttons###
 
         self.frame_btn = tk.LabelFrame(self.master, text='Control', font=self.font_frame)
-        self.frame_btn.place(x=10, y=10+self.height_and_margin)
-        self.frame_btn.configure(width=max(self.width_and_margin, 570), height=100)
+        self.frame_btn.place(x=10, y=self.height_and_margin+10)
+        self.frame_btn.configure(width=self.width_and_margin, height=100)
         self.frame_btn.grid_propagate(0)
 
         #circle detection button
         self.btn_snapshot = tk.Button(self.frame_btn, text='円検出', font=self.font_btn_big)
         self.btn_snapshot.configure(width=12, height=1, command=self.press_circle_detection)
-        self.btn_snapshot.grid(column=0, row=0, padx=10, pady=10)
+        self.btn_snapshot.grid(column=0, row=0, padx=20, pady=10)
 
         #Close button
         self.btn_close = tk.Button(self.frame_btn, text='Close', font=self.font_btn_big)
         self.btn_close.configure(width=12, height=1, command=self.press_close_button)
-        self.btn_close.grid(column=1, row=0, padx=10, pady=10)
+        self.btn_close.grid(column=1, row=0, padx=20, pady=10)
 
         #Seve button
         self.btn_save = tk.Button(self.frame_btn, text='CSV出力', font=self.font_btn_big)
         self.btn_save.configure(width=12, height=1, command=self.press_save_flag)
-        self.btn_save.grid(column=2, row=0, padx=10, pady=10)
+        self.btn_save.grid(column=2, row=0, padx=20, pady=10)
 
         ###Frame_Buttons_End###
 
@@ -152,7 +154,7 @@ class Application(tk.Frame):
         self.frame_param.place(x=10, y=+10+100+self.height_and_margin)
         self.frame_param.configure(width=max(self.width_and_margin, 570), height=150)
         self.frame_param.grid_propagate(0)
-
+        
         #min Dist
         self.minDist_label = tk.Label(self.frame_param, text="min dist", font=self.font_frame)
         self.minDist_label.grid(column=0, row=0, padx=10, pady=10)
@@ -183,7 +185,7 @@ class Application(tk.Frame):
         #change
         self.btn_change = tk.Button(self.frame_param, text='Change', font=self.font_btn_big)
         self.btn_change.configure(width=12, height=1, command=self.press_change)
-        self.btn_change.grid(column=4, row=1, padx=10, pady=10)
+        self.btn_change.grid(column=6, row=0, padx=10, pady=10)
 
         ##Frame_params_End###
 
@@ -195,16 +197,19 @@ class Application(tk.Frame):
         self.second = time() - self.init_time
 
         if ret:
+            self.frame_iterator += 1
             # キャリブレーション
-            mtx = np.array([[2.23429413e+03, 0.00000000e+00, 6.36470010e+02],
-                            [0.00000000e+00, 2.31772325e+03, 5.74525725e+02],
-                            [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
-            _dist = np.array([[-0.77271385, -0.55940247, -0.00505415,  0.08305395,  1.77990709]])
-            wh = (1080, 1920)
-            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, _dist, wh, 1, wh)
-            dst = cv2.undistort(frame, mtx, _dist, None, newcameramtx)
+            # mtx = np.array([[2.23429413e+03, 0.00000000e+00, 6.36470010e+02],
+            #                 [0.00000000e+00, 2.31772325e+03, 5.74525725e+02],
+            #                 [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+            # _dist = np.array([[-0.77271385, -0.55940247, -0.00505415,  0.08305395,  1.77990709]])
+            # wh = (1080, 1920)
+            # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, _dist, wh, 1, wh)
+            # dst = cv2.undistort(frame, mtx, _dist, None, newcameramtx)
 
-            frame = frame[40:40+self.width, 100:100+self.height]
+            # 圧縮
+            # frame = frame[40:420, 100:540]
+            frame = cv2.resize(frame, dsize=None, fx=0.5, fy=0.5, interpolation=cv2.INTER_LINEAR)
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             if self.circle_detection_flag:
@@ -218,14 +223,26 @@ class Application(tk.Frame):
                                         maxRadius=0)
                 if circles is not None:
                     for circle in circles:
+                        circle_colors = [(255,0,0), (0, 255, 0), (0, 0, 255)]
+                        circle_colors_itr = 0
                         for x, y, r in circle:
-                            frame = cv2.circle(frame, (int(x), int(y)), int(r), (255, 0, 0), 3)
+                            frame = cv2.circle(frame, (int(x), int(y)), int(r), circle_colors[circle_colors_itr//3], 3)
+                            circle_colors_itr += 1
+                    # for circle in circles:
+                    #     for x, y, r in circle:
+                    #         frame = cv2.circle(frame, (int(x), int(y)), int(r), (255, 0, 0), 3)
 
-                    if self.save_flag:
-                        with open(self.csvfile, "a", newline='') as f:
-                            writer_object = writer(f)
-                            writer_object.writerow([self.second] + circle.flatten().tolist())
-                            f.close()
+                if self.save_flag:
+                    write_list = [self.frame_iterator, self.second]
+                    if circles is not None:
+                        for circle in circles:
+                            write_list += circle.flatten().tolist()
+                    else:
+                        print("no detected, at", self.second)
+                    with open(self.csvfile, "a", newline='') as f:
+                        writer_object = writer(f)
+                        writer_object.writerow(write_list)
+                        f.close()
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
 
             #self.photo -> Canvas
