@@ -1,3 +1,5 @@
+# video_source のファイル名を書き換えて実行
+
 import cv2
 
 import PIL.Image, PIL.ImageTk
