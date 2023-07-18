@@ -42,17 +42,23 @@ with open('./video_analysis/iPhone_data/simple-fetch.csv', "r") as f:
         old_x = x
     f.close()
 
+# フレーム間隔（sec）
 CAMERA_SECONDS_PER_FRAME = (end_time - start_time)/float((end_frame - start_frame)*1000)
 print(CAMERA_SECONDS_PER_FRAME*1000, "ms")
+print(float(end_frame - start_frame)/(end_time - start_time), "Hz")
 
 # x_coodinates = np.array(x_coodinates)
 fftResult = rfft(x_coodinates)
-fftResult = [abs(fx.real) for fx in fftResult]
+# fftResult = [abs(fx.real) for fx in fftResult]
+fftResult = np.abs(fftResult)
 n = len(x_coodinates)
 freq = rfftfreq(n, d=CAMERA_SECONDS_PER_FRAME)
 print(n)
 
-# 0Hz 成分が極端に大きく出たため、そこだけ取り除いた。
+# fftResultdB = 10*np.log10(np.abs(fftResult))
+# fftResultdB = fftResultdB - max(fftResultdB)
+
+# 直流成分が極端に大きく出たため、そこだけ取り除いた。（前処理不足）
 plt.plot(freq[1:100], fftResult[1:100])
 # plt.plot(freq, fftResult)
 plt.yscale('log')
