@@ -1,51 +1,36 @@
 import cv2
-
-import PIL.Image, PIL.ImageTk
+from cv2.typing import MatLike
 import tkinter as tk
-from tkinter import ttk
-from tkinter import font
+from tkinter import ttk, font, Misc
+from PIL import Image, ImageTk
+from numpy import array as npArray
 
 from csv import writer
 from time import time
-import numpy as np
-import sys
+from sys import stderr
 
 
-class Application(tk.Frame):
-    def __init__(self, master, video_source=0):
+class Application(ttk.Frame):
+    def __init__(self, master: Misc | None, video_source=0):
         super().__init__(master)
 
-        # ---------------------------------------------------------
-        # Open the video source
-        # ---------------------------------------------------------
+        self.master.title("Tkinter with Video Streaming and Capture")
 
-        self.vcap = cv2.VideoCapture(video_source)
-        if not self.vcap.isOpened():
-            sys.stderr.write("cannot access video source.")
-            exit()
+        self.vcap = self.getVideoSourceOrExit(video_source)
 
-        self.origin_width = int(self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.origin_height = int(self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        print(f"resolution: {self.origin_width}x{self.origin_height}")
-
+        # set video size
         self.height = 380
         self.width = 440
-        self.width_and_margin = self.width + 30
-        self.height_and_margin = self.height + 50
+        self.video_capture = ImageTk.PhotoImage(file="app/img/440x380.png")
 
         # set widget size
-
+        self.width_and_margin = self.width + 30
+        self.height_and_margin = self.height + 50
         self.master.geometry(
             f"{max(self.width_and_margin, 600)}x{self.height_and_margin+270}"
         )
-        self.master.title("Tkinter with Video Streaming and Capture")
 
-        # ---------------------------------------------------------
-        # initialize setting
-        # ---------------------------------------------------------
-
-        self.csvfile = "test.csv"
-        self.init_time = time()
+        ###button flags###
         self.circle_detection_flag = False
         self.save_flag = False
 
@@ -55,34 +40,10 @@ class Application(tk.Frame):
         self.par2 = 60
 
         ###csv用意###
-        columns_name = ["time"]
-
-        for i in range(10):
-            lis = [f"x{i + 1}", f"y{i + 1}", f"r{i + 1}"]
-            columns_name.extend(lis)
-
-        with open(self.csvfile, "w", newline="") as f:
-            writer_object = writer(f)
-            writer_object.writerow(columns_name)
-            f.close()
+        self.csv_file = "test.csv"
+        self.init_time = time()
+        self.initializeCSV(filename_or_path=self.csv_file)
         #############
-
-        # ---------------------------------------------------------
-        # Font
-        # ---------------------------------------------------------
-
-        fontFamily = "Meiryo UI"
-        fontSize = 15
-        fontConfig = font.Font(family=fontFamily, size=fontSize, weight=font.NORMAL)
-        fontConfig_bold = font.Font(family=fontFamily, size=fontSize, weight=font.BOLD)
-
-        self.font_frame = fontConfig
-        self.font_btn_big = fontConfig_bold
-        self.font_lbl = fontConfig
-
-        # ---------------------------------------------------------
-        # Widget
-        # ---------------------------------------------------------
 
         self.create_widgets()
 
@@ -90,13 +51,51 @@ class Application(tk.Frame):
         # Canvas Update
         # ---------------------------------------------------------
 
-        self.delay = 15  # [milli seconds]
+        self.delay = 1  # [milliseconds]
         self.update()
 
+    def getVideoSourceOrExit(self, video_source: int = 0):
+        vcap = cv2.VideoCapture(video_source)
+        if not vcap.isOpened():
+            stderr.write("cannot access video source.")
+            exit()
+
+        video_origin_width = int(vcap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        video_origin_height = int(vcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        print(f"resolution: {video_origin_width}x{video_origin_height}")
+
+        return vcap
+
+    def initializeCSV(self, filename_or_path: str = "test.csv"):
+        columns_title = ["time"]
+        for i in range(8):
+            lis = [f"x{i + 1}", f"y{i + 1}", f"r{i + 1}"]
+            columns_title.extend(lis)
+
+        with open(file=filename_or_path, mode="w", newline="") as f:
+            writer_object = writer(f)
+            writer_object.writerow(columns_title)
+            f.close()
+
     def create_widgets(self):
+        # ---------------------------------------------------------
+        # Font
+        # ---------------------------------------------------------
+
+        fontFamily = "Meiryo UI"
+        fontSize = 15
+        fontConfig = font.Font(family=fontFamily, size=fontSize, weight=font.NORMAL)
+        fontConfig_big_bold = font.Font(
+            family=fontFamily, size=fontSize + 10, weight=font.BOLD
+        )
+
+        font_frame = fontConfig
+        font_btn = fontConfig_big_bold
+        font_lbl = fontConfig
+
         ###Frame_Camera###
 
-        self.frame_cam = tk.LabelFrame(self.master, text="Camera", font=self.font_frame)
+        self.frame_cam = ttk.LabelFrame(self.master, text="Camera")
         self.frame_cam.place(x=10, y=10)
         self.frame_cam.configure(
             width=self.width_and_margin, height=self.height_and_margin
@@ -112,47 +111,37 @@ class Application(tk.Frame):
 
         ###Frame_Buttons###
 
-        self.frame_btn = tk.LabelFrame(
-            self.master, text="Control", font=self.font_frame
-        )
+        self.frame_btn = ttk.LabelFrame(self.master, text="Control")
         self.frame_btn.place(x=10, y=10 + self.height_and_margin)
         self.frame_btn.configure(width=max(self.width_and_margin, 570), height=100)
         self.frame_btn.grid_propagate(0)
 
         # circle detection button
-        self.btn_snapshot = tk.Button(
-            self.frame_btn, text="円検出", font=self.font_btn_big
-        )
-        self.btn_snapshot.configure(
-            width=12, height=1, command=self.press_circle_detection
-        )
+        self.btn_snapshot = ttk.Button(self.frame_btn, text="円検出")
+        self.btn_snapshot.configure(width=12, command=self.press_circle_detection)
         self.btn_snapshot.grid(column=0, row=0, padx=10, pady=10)
 
         # Close button
-        self.btn_close = tk.Button(self.frame_btn, text="Close", font=self.font_btn_big)
-        self.btn_close.configure(width=12, height=1, command=self.press_close_button)
+        self.btn_close = ttk.Button(self.frame_btn, text="Close")
+        self.btn_close.configure(width=12, command=self.press_close_button)
         self.btn_close.grid(column=1, row=0, padx=10, pady=10)
 
         # Seve button
-        self.btn_save = tk.Button(self.frame_btn, text="CSV出力", font=self.font_btn_big)
-        self.btn_save.configure(width=12, height=1, command=self.press_save_flag)
+        self.btn_save = ttk.Button(self.frame_btn, text="CSV出力")
+        self.btn_save.configure(width=12, command=self.press_save_flag)
         self.btn_save.grid(column=2, row=0, padx=10, pady=10)
 
         ###Frame_Buttons_End###
 
         ##Frame_params###
 
-        self.frame_param = tk.LabelFrame(
-            self.master, text="Parameters", font=self.font_frame
-        )
+        self.frame_param = ttk.LabelFrame(self.master, text="Parameters")
         self.frame_param.place(x=10, y=+10 + 100 + self.height_and_margin)
         self.frame_param.configure(width=max(self.width_and_margin, 570), height=150)
         self.frame_param.grid_propagate(0)
 
         # min Dist
-        self.minDist_label = tk.Label(
-            self.frame_param, text="min dist", font=self.font_lbl
-        )
+        self.minDist_label = ttk.Label(self.frame_param, text="min dist", font=font_lbl)
         self.minDist_label.grid(column=0, row=0, padx=10, pady=10)
 
         self.minDist_number = tk.DoubleVar()
@@ -163,9 +152,7 @@ class Application(tk.Frame):
         self.minDist_var.grid(column=1, row=0, padx=10, pady=10)
 
         # param1
-        self.param1_label = ttk.Label(
-            self.frame_param, text="param1", font=self.font_lbl
-        )
+        self.param1_label = ttk.Label(self.frame_param, text="param1", font=font_lbl)
         self.param1_label.grid(column=2, row=0, padx=10, pady=10)
 
         self.param1_number = tk.DoubleVar()
@@ -176,9 +163,7 @@ class Application(tk.Frame):
         self.param1_var.grid(column=3, row=0, padx=10, pady=10)
 
         # param2
-        self.param2_label = ttk.Label(
-            self.frame_param, text="param2", font=self.font_lbl
-        )
+        self.param2_label = ttk.Label(self.frame_param, text="param2", font=font_lbl)
         self.param2_label.grid(column=4, row=0, padx=10, pady=10)
 
         self.param2_number = tk.DoubleVar()
@@ -189,72 +174,93 @@ class Application(tk.Frame):
         self.param2_var.grid(column=5, row=0, padx=10, pady=10)
 
         # change
-        self.btn_change = tk.Button(
-            self.frame_param, text="Change", font=self.font_btn_big
-        )
-        self.btn_change.configure(width=12, height=1, command=self.press_change)
-        self.btn_change.grid(column=4, row=1, padx=10, pady=10)
+        self.btn_change = ttk.Button(self.frame_param, text="Change")
+        self.btn_change.configure(width=12, command=self.press_change)
+        self.btn_change.grid(column=5, row=1, padx=10, pady=10)
 
         ##Frame_params_End###
 
+    def calibration(self, frame: MatLike):
+        camera_mtx = npArray(
+            [
+                [2.23429413e03, 0.00000000e00, 6.36470010e02],
+                [0.00000000e00, 2.31772325e03, 5.74525725e02],
+                [0.00000000e00, 0.00000000e00, 1.00000000e00],
+            ]
+        )
+
+        distortion_coefficients = npArray(
+            [[-0.77271385, -0.55940247, -0.00505415, 0.08305395, 1.77990709]]
+        )
+
+        # 最適画像サイズ
+        wh = (1080, 1920)
+
+        # フリースケーリングパラメータ（変換後に出る画像端の黒い部分をどの程度含むか）
+        α = 1
+
+        new_camera_mtx, (x, y, w, h) = cv2.getOptimalNewCameraMatrix(
+            camera_mtx, distortion_coefficients, wh, α
+        )
+        dst = cv2.undistort(
+            frame, camera_mtx, distortion_coefficients, newCameraMatrix=new_camera_mtx
+        )
+        dst = dst[y : y + h, x : x + w]
+        return dst
+
     def update(self):
+        # count timer
+        second = time() - self.init_time
+
         # Get a frame from the video source
-        ret, frame = self.vcap.read()
+        can_get_frame, frame = self.vcap.read()
 
-        self.second = time() - self.init_time
-
-        if ret:
-            # キャリブレーション
-            mtx = np.array(
-                [
-                    [2.23429413e03, 0.00000000e00, 6.36470010e02],
-                    [0.00000000e00, 2.31772325e03, 5.74525725e02],
-                    [0.00000000e00, 0.00000000e00, 1.00000000e00],
-                ]
-            )
-            _dist = np.array(
-                [[-0.77271385, -0.55940247, -0.00505415, 0.08305395, 1.77990709]]
-            )
-            wh = (1080, 1920)
-            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, _dist, wh, 1, wh)
-            dst = cv2.undistort(frame, mtx, _dist, None, newcameramtx)
-
-            frame = frame[40 : 40 + self.width, 100 : 100 + self.height]
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            if self.circle_detection_flag:
-                gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-                circles = cv2.HoughCircles(
-                    gray,
-                    cv2.HOUGH_GRADIENT,
-                    dp=1,
-                    minDist=self.mdist,
-                    param1=self.par1,
-                    param2=self.par2,
-                    minRadius=0,
-                    maxRadius=0,
-                )
-                if circles is not None:
-                    for circle in circles:
-                        for x, y, r in circle:
-                            frame = cv2.circle(
-                                frame, (int(x), int(y)), int(r), (255, 0, 0), 3
-                            )
-
-                    if self.save_flag:
-                        with open(self.csvfile, "a", newline="") as f:
-                            writer_object = writer(f)
-                            writer_object.writerow(
-                                [self.second] + circle.flatten().tolist()
-                            )
-                            f.close()
-            self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
-
-            # self.photo -> Canvas
-            self.canvas1.create_image(0, 0, image=self.photo, anchor=tk.NW)
-            self.master.after(self.delay, self.update)
-        else:
+        if not can_get_frame:
+            # maybe unreachable
+            self.video_capture = ImageTk.PhotoImage(file="app/img/440x380.png")
+            self.canvas1.create_image(0, 0, image=self.video_capture, anchor=tk.NW)
             self.vcap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            stderr("couldn't get camera frame")
+            exit()
+
+        # カメラ歪補正
+        # frame = self.calibration(frame)
+        frame = frame[0 : self.height, 0 : self.width]
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        if self.circle_detection_flag:
+            gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            circles = cv2.HoughCircles(
+                gray,
+                cv2.HOUGH_GRADIENT,
+                dp=1,
+                minDist=self.mdist,
+                param1=self.par1,
+                param2=self.par2,
+                minRadius=0,
+                maxRadius=0,
+            )
+            if circles is not None:
+                for circle in circles:
+                    circle_color = (255, 0, 0)
+                    circle_thickness = 3
+                    for x, y, r in circle:
+                        frame = cv2.circle(
+                            frame,
+                            (int(x), int(y)),
+                            int(r),
+                            circle_color,
+                            circle_thickness,
+                        )
+
+                if self.save_flag:
+                    with open(self.csv_file, "a", newline="") as f:
+                        writer_object = writer(f)
+                        writer_object.writerow([second] + circle.flatten().tolist())
+                        f.close()
+        self.video_capture = ImageTk.PhotoImage(image=Image.fromarray(frame))
+        self.canvas1.create_image(0, 0, image=self.video_capture, anchor=tk.NW)
+        self.master.after(self.delay, self.update)
 
     def press_close_button(self):
         self.master.destroy()
@@ -277,7 +283,7 @@ class Application(tk.Frame):
 
 def main():
     root = tk.Tk()
-    app = Application(master=root)  # Inherit
+    app = Application(master=root, video_source=0)  # Inherit
     app.mainloop()
 
 
