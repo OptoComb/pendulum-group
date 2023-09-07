@@ -8,7 +8,7 @@ CAMERA_SECONDS_PER_FRAME_EPSILON = 0.005
 
 x_coodinates = []
 
-with open('./gui/simple-pendulum-fetch.csv', "r") as f:
+with open("./gui/simple-pendulum-fetch.csv", "r") as f:
     reader_object = reader(f)
     old_t = 190.8394623
     old_x = 196.5
@@ -19,7 +19,7 @@ with open('./gui/simple-pendulum-fetch.csv', "r") as f:
         # 足りないデータは線形補間
         while t > (old_t + CAMERA_SECONDS_PER_FRAME + CAMERA_SECONDS_PER_FRAME_EPSILON):
             old_t += CAMERA_SECONDS_PER_FRAME
-            old_x = x1 + (x1-old_x)/((t-old_t)/CAMERA_SECONDS_PER_FRAME)
+            old_x = x1 + (x1 - old_x) / ((t - old_t) / CAMERA_SECONDS_PER_FRAME)
             x_coodinates.append(old_x)
 
         x_coodinates.append(x1)
