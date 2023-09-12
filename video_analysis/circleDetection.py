@@ -12,12 +12,12 @@ from time import time
 import numpy as np
 import sys
 
-video_source = "video_analysis/iPhone_data/IMG_5475.mov"
+video_source = "video_analysis/iPhone_data/simple.mov"
 delay = 1  # milli seconds
 
 
 class Application(tk.Frame):
-    def __init__(self, master, video_source="video_analysis/iPhone_data/IMG_5477.mov"):
+    def __init__(self, master, video_source=video_source):
         super().__init__(master)
 
         # ---------------------------------------------------------
@@ -100,6 +100,7 @@ class Application(tk.Frame):
         # ---------------------------------------------------------
 
         self.delay = 15  # [milli seconds]
+        self.config()
         self.update()
 
     def create_widgets(self):
@@ -197,14 +198,57 @@ class Application(tk.Frame):
         )
         self.param2_var.grid(column=5, row=0, padx=10, pady=10)
 
-        # change
-        self.btn_change = tk.Button(
-            self.frame_param, text="Change", font=self.font_btn_big
+        # apply
+        self.btn_apply = tk.Button(
+            self.frame_param, text="Apply", font=self.font_btn_big
         )
-        self.btn_change.configure(width=12, height=1, command=self.press_change)
-        self.btn_change.grid(column=6, row=0, padx=10, pady=10)
+        self.btn_apply.configure(width=12, height=1, command=self.press_apply)
+        self.btn_apply.grid(column=6, row=0, padx=10, pady=10)
 
         ##Frame_params_End###
+
+    def config(self):
+        ret, frame = self.vcap.read()
+
+        if ret:
+            frame = cv2.resize(frame, dsize=None, fx=0.5, fy=0.5, interpolation=cv2.INTER_LINEAR)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            circles = cv2.HoughCircles(
+                    gray,
+                    cv2.HOUGH_GRADIENT,
+                    dp=1,
+                    minDist=self.mdist,
+                    param1=100,
+                    param2=self.par2,
+                    minRadius=0,
+                    maxRadius=0,
+                )
+            if circles is not None:
+                for circle in circles:
+                    circle_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+                    circle_colors_itr = 0
+                    for x, y, r in circle:
+                        frame = cv2.circle(
+                            frame,
+                            (int(x), int(y)),
+                            int(r),
+                            circle_colors[circle_colors_itr // 3],
+                            3,
+                        )
+                        frame = cv2.line(frame, pt1=(0, y+r), pt2=(self.width, y+r), color=circle_colors[circle_colors_itr // 3])
+                        circle_colors_itr += 1
+            
+            # TODO: create_widget のときは、閾値 y1, y2 と minDist, par2, それから applyボタン(self.config)、初期設定完了ボタン(self.finish_config)
+            # def finish_config したら CSV出力もーどに切り替え、中断ボタンを表示、出力完了でダイアログを出す。
+
+            self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
+            self.canvas1.create_image(0, 0, image=self.photo, anchor=tk.NW)
+            self.master.after(self.delay, self.config)
+
+        else:
+            self.vcap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
 
     def update(self):
         # Get a frame from the video source
@@ -237,7 +281,7 @@ class Application(tk.Frame):
                     cv2.HOUGH_GRADIENT,
                     dp=1,
                     minDist=self.mdist,
-                    param1=self.par1,
+                    param1=100,
                     param2=self.par2,
                     minRadius=0,
                     maxRadius=0,
@@ -263,6 +307,7 @@ class Application(tk.Frame):
                     write_list = [self.frame_iterator, self.second]
                     if circles is not None:
                         for circle in circles:
+                            # TODO: y 座標と self.y1, self.y2 で順番を変えたりする
                             write_list += circle.flatten().tolist()
                     else:
                         print("no detected, at", self.second)
@@ -290,7 +335,7 @@ class Application(tk.Frame):
         self.save_flag = not self.save_flag
         self.btn_save.config(text=("CSV出力中" if self.save_flag else "CSV出力"))
 
-    def press_change(self):
+    def press_apply(self):
         ###fitting parameter###
         self.mdist = self.minDist_number.get()
         self.par1 = self.param1_number.get()
