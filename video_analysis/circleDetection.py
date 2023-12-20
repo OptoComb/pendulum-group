@@ -17,7 +17,7 @@ delay = 1  # milli seconds
 
 
 class Application(tk.Frame):
-    def __init__(self, master, video_source="video_analysis/iPhone_data/IMG_5477.mov"):
+    def __init__(self, master, video_source=video_source):
         super().__init__(master)
 
         # ---------------------------------------------------------
@@ -230,6 +230,24 @@ class Application(tk.Frame):
             )
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+            # 線
+            detect_line_y = [self.height // 10, self.height // 4]
+            frame = cv2.line(
+                frame,
+                (0, detect_line_y[0]),
+                (self.width, detect_line_y[0]),
+                (255, 0, 0),
+                thickness=3,
+            )
+            frame = cv2.line(
+                frame,
+                (0, detect_line_y[1]),
+                (self.width, detect_line_y[1]),
+                (0, 255, 0),
+                thickness=3,
+            )
+
+            # 円検出
             if self.circle_detection_flag:
                 gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
                 circles = cv2.HoughCircles(
@@ -245,16 +263,20 @@ class Application(tk.Frame):
                 if circles is not None:
                     for circle in circles:
                         circle_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
-                        circle_colors_itr = 0
                         for x, y, r in circle:
                             frame = cv2.circle(
                                 frame,
                                 (int(x), int(y)),
                                 int(r),
-                                circle_colors[circle_colors_itr // 3],
+                                circle_colors[
+                                    0
+                                    if y < detect_line_y[0]
+                                    else 1
+                                    if y < detect_line_y[1]
+                                    else 2
+                                ],
                                 3,
                             )
-                            circle_colors_itr += 1
                     # for circle in circles:
                     #     for x, y, r in circle:
                     #         frame = cv2.circle(frame, (int(x), int(y)), int(r), (255, 0, 0), 3)
