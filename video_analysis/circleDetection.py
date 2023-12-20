@@ -240,7 +240,7 @@ class Application(tk.Frame):
                     param1=self.par1,
                     param2=self.par2,
                     minRadius=0,
-                    maxRadius=0,
+                    maxRadius=50,
                 )
                 if circles is not None:
                     for circle in circles:
