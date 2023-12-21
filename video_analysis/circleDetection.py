@@ -4,20 +4,20 @@ import cv2
 
 import PIL.Image, PIL.ImageTk
 import tkinter as tk
-from tkinter import ttk
-from tkinter import font
+from tkinter import Misc, ttk, font
 
 from csv import writer
 from time import time
-import numpy as np
+
+# from numpy import array as npArray
 import sys
 
-video_source = "video_analysis/iPhone_data/IMG_5475.mov"
+video_source = "IMG_4001.mov"
 delay = 1  # milli seconds
 
 
 class Application(tk.Frame):
-    def __init__(self, master, video_source=video_source):
+    def __init__(self, master: Misc | None, video_source: str = video_source):
         super().__init__(master)
 
         # ---------------------------------------------------------
@@ -110,7 +110,7 @@ class Application(tk.Frame):
         self.frame_cam.configure(
             width=self.width_and_margin, height=self.height_and_margin
         )
-        self.frame_cam.grid_propagate(0)
+        self.frame_cam.grid_propagate(False)
 
         # Canvas
         self.canvas1 = tk.Canvas(self.frame_cam)
@@ -126,7 +126,7 @@ class Application(tk.Frame):
         )
         self.frame_btn.place(x=10, y=self.height_and_margin + 10)
         self.frame_btn.configure(width=self.width_and_margin, height=100)
-        self.frame_btn.grid_propagate(0)
+        self.frame_btn.grid_propagate(False)
 
         # circle detection button
         self.btn_snapshot = tk.Button(
@@ -156,7 +156,7 @@ class Application(tk.Frame):
         )
         self.frame_param.place(x=10, y=+10 + 100 + self.height_and_margin)
         self.frame_param.configure(width=max(self.width_and_margin, 570), height=150)
-        self.frame_param.grid_propagate(0)
+        self.frame_param.grid_propagate(False)
 
         # min Dist
         self.minDist_label = tk.Label(
@@ -215,10 +215,10 @@ class Application(tk.Frame):
         if ret:
             self.frame_iterator += 1
             # キャリブレーション
-            # mtx = np.array([[2.23429413e+03, 0.00000000e+00, 6.36470010e+02],
+            # mtx = npArray([[2.23429413e+03, 0.00000000e+00, 6.36470010e+02],
             #                 [0.00000000e+00, 2.31772325e+03, 5.74525725e+02],
             #                 [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
-            # _dist = np.array([[-0.77271385, -0.55940247, -0.00505415,  0.08305395,  1.77990709]])
+            # _dist = npArray([[-0.77271385, -0.55940247, -0.00505415,  0.08305395,  1.77990709]])
             # wh = (1080, 1920)
             # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, _dist, wh, 1, wh)
             # dst = cv2.undistort(frame, mtx, _dist, None, newcameramtx)
@@ -260,7 +260,10 @@ class Application(tk.Frame):
                     minRadius=0,
                     maxRadius=50,
                 )
-                if circles is not None:
+                if circles is None:
+                    print("no detected, at", self.second)
+                else:
+                    # circles.sort(axis=1)
                     for circle in circles:
                         circle_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
                         for x, y, r in circle:
@@ -286,8 +289,6 @@ class Application(tk.Frame):
                     if circles is not None:
                         for circle in circles:
                             write_list += circle.flatten().tolist()
-                    else:
-                        print("no detected, at", self.second)
                     with open(self.csvfile, "a", newline="") as f:
                         writer_object = writer(f)
                         writer_object.writerow(write_list)
