@@ -6,41 +6,17 @@
 
 Calibrate your camera using OpenCV.
 
-## Using the C++ code
-### Compilation
-To compile the `cameraCalibration.cpp`  and `cameraCalibrationWithUndistortion.cpp` code files, use the following:
-```shell
-mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
-```
 ## Usage
 
-### Using the C++ code
-
-Refer to the following to use the compiled files:
-
-```shell
-./build/cameraCalibration
-./build/cameraCalibrationWithUndistortion
-```
-
-### Using the python code
-
-Refer to the following to use the `cameraCalibration.py` and `cameraCalibrationWithUndistortion.py` files respectively:
+[校正用画像](#追記校正用画像)を印刷し，校正したいカメラで撮影．
+撮影したデータを`./img_camera/CHECKBOARD.jpg`等に保存し，次のいずれかのコマンドを実行すると，数値が色々出てくる．
+これらをコピーし，`circleDetection.py` の該当箇所の数値と置き換える．
 
 ```shell
 python3 cameraCalibration.py
 python3 cameraCalibrationWithUndistortion.py
 ```
 
-# AI Courses by OpenCV
+### 校正用画像
 
-Want to become an expert in AI? [AI Courses by OpenCV](https://opencv.org/courses/) is a great place to start. 
-
-<a href="https://opencv.org/courses/">
-<p align="center"> 
-<img src="https://learnopencv.com/wp-content/uploads/2023/01/AI-Courses-By-OpenCV-Github.png">
-</p>
-</a>
+[![image](./チェッカーボード-768x538.png)](./チェッカーボード-768x538.png)
