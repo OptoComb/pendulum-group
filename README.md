@@ -1,7 +1,7 @@
 # pendulum-group
 
-UEQ Quantum Base 光コム (OptoComb) グループ 振り子 (pendulum) 班.
-[ドキュメント](https://www.overleaf.com/read/gttmbhjdwssd#fc1ea5)
+UEQ Quantum Base 光コム (OptoComb) グループ 振り子 (pendulum) 班.  
+[ドキュメント(overleaf)](https://www.overleaf.com/read/gttmbhjdwssd#fc1ea5)
 
 ## 1. 依存ライブラリのインストール
 
